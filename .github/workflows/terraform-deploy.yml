@@ -22,6 +22,7 @@ jobs:
         echo "client_secret = \"${{ secrets.ARM_CLIENT_SECRET }}\"" >> terraform.tfvars
         echo "subscription_id = \"${{ secrets.ARM_SUBSCRIPTION_ID }}\"" >> terraform.tfvars
         echo "tenant_id = \"${{ secrets.ARM_TENANT_ID }}\"" >> terraform.tfvars
+        echo "object_id = \"${{ secrets.ARM_OBJECT_ID }}\"" >> terraform.tfvars
         ls -la
         cat terraform.tfvars
 
