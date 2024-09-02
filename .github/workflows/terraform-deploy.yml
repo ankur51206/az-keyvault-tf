@@ -1,0 +1,63 @@
+name: Deploy Terraform
+
+on:
+  workflow_dispatch:
+
+jobs:
+  terraform-execution:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: '1.4.0'
+
+    - name: Create terraform.tfvars
+      run: |
+        echo "client_id = \"${{ secrets.ARM_CLIENT_ID }}\"" > terraform.tfvars
+        echo "client_secret = \"${{ secrets.ARM_CLIENT_SECRET }}\"" >> terraform.tfvars
+        echo "subscription_id = \"${{ secrets.ARM_SUBSCRIPTION_ID }}\"" >> terraform.tfvars
+        echo "tenant_id = \"${{ secrets.ARM_TENANT_ID }}\"" >> terraform.tfvars
+        ls -la
+        cat terraform.tfvars
+
+    - name: Initialize Terraform
+      run: |
+        echo "## Initializing Terraform"
+        terraform init \
+          -backend-config="resource_group_name=${{ secrets.RESOURCE_GROUP_NAME }}" \
+          -backend-config="storage_account_name=${{ secrets.STORAGE_ACCOUNT_NAME }}" \
+          -backend-config="container_name=${{ secrets.CONTAINER_NAME }}" \
+          -backend-config="key=${{ github.repository }}/terraform.tfstate"
+        echo "## Terraform Initialized"
+      env:
+        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+    - name: Plan Terraform Changes
+      run: |
+        echo "## Planning Terraform Changes"
+        terraform plan -var-file=terraform.tfvars -out=tfplan
+        echo "## Terraform Plan Completed"
+      env:
+        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+    - name: Apply Terraform Changes
+      run: |
+        echo "## Applying Terraform Changes"
+        terraform apply -auto-approve tfplan
+        echo "## Terraform Apply Completed"
+      env:
+        ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
