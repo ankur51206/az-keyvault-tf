@@ -25,22 +25,20 @@ jobs:
         ls -la
         cat terraform.tfvars
 
-    - name: Terraform Init
-      env:
-          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-          ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-          REPO_NAME: ${{ github.repository }}
+    - name: Initialize Terraform
       run: |
-          # Extract the repository name from the GITHUB_REPOSITORY variable
-          REPO_NAME=${GITHUB_REPOSITORY#*/}
-          
-          terraform init \
-            -backend-config="resource_group_name=${{ secrets.RESOURCE_GROUP_NAME }}" \
-            -backend-config="storage_account_name=${{ secrets.STORAGE_ACCOUNT_NAME }}" \
-            -backend-config="container_name=${{ secrets.CONTAINER_NAME }}" \
-            -backend-config="key=${REPO_NAME}/terraform.tfstate"
+        # Extract repository name from github.repository
+        REPO_NAME=$(echo "${{ github.repository }}" | awk -F'/' '{print $2}')
+        
+        echo "## Initializing Terraform"
+        terraform init \
+          -backend-config="resource_group_name=${{ secrets.RESOURCE_GROUP_NAME }}" \
+          -backend-config="storage_account_name=${{ secrets.STORAGE_ACCOUNT_NAME }}" \
+          -backend-config="container_name=${{ secrets.CONTAINER_NAME }}" \
+          -backend-config="key=${REPO_NAME}/terraform.tfstate"  # Use repo name only
+        echo "## Terraform Initialized"
+    
+    
     - name: Plan Terraform Changes
       run: |
         echo "## Planning Terraform Changes"
